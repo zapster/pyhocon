@@ -1151,6 +1151,35 @@ class TestConfigParser(object):
             assert config['x'] == 42
             assert config['y'] == 42
 
+    def test_include_substitution_fixup1(self):
+        with tempfile.NamedTemporaryFile('w') as fdin:
+            fdin.write('{ x : 10, y : ${x} }')
+            fdin.flush()
+
+            config = ConfigFactory.parse_string(
+                """
+                {{ a : {{ include "{tmp_file}" }} }}
+                """.format(tmp_file=fdin.name)
+            )
+            assert config['a.x'] == 10
+            assert config['a.y'] == 10
+
+    def test_include_substitution_fixup2(self):
+        with tempfile.NamedTemporaryFile('w') as fdin:
+            fdin.write('{ x : 10, y : ${x} }')
+            fdin.flush()
+
+            config = ConfigFactory.parse_string(
+                """
+                {{
+                    a : {{ include "{tmp_file}" }}
+                    a : {{ x : 42 }}
+                }}
+                """.format(tmp_file=fdin.name)
+            )
+            assert config['a.x'] == 42
+            assert config['a.y'] == 42
+
     def test_substitution_override(self):
         config = ConfigFactory.parse_string(
             """
